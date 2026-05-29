@@ -28,48 +28,6 @@ function httpGetJson(url) {
   });
 }
 
-// PowerShell wallpaper changer
-function changeWallpaper(wallpaperName) {
-  try {
-    // Resolve absolute path to wallpaper asset
-    const wallpaperPath = path.join(app.getAppPath(), 'wallpapers', wallpaperName);
-    
-    // Standard Windows User32 API call via PowerShell to change desktop wallpaper immediately
-    const psCommand = `powershell -Command "Add-Type -TypeDefinition '[DllImport(\\"user32.dll\\")] public class Win { [DllImport(\\"user32.dll\\", CharSet = CharSet.Auto)] public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni); }'; [Win]::SystemParametersInfo(20, 0, \\"${wallpaperPath}\\", 3)"`;
-    
-    exec(psCommand, (err) => {
-      if (err) {
-        console.error('Wallpaper execution error:', err);
-      }
-    });
-  } catch (err) {
-    console.error('Failed to change wallpaper:', err);
-  }
-}
-
-// Select wallpaper based on weather code and time of day
-function selectWallpaperForWeather(code) {
-  const hour = new Date().getHours();
-  
-  // 1. Rainy/Thunderstorm conditions
-  if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code)) {
-    return 'rainy.png';
-  }
-  
-  // 2. Night time (6 PM to 6 AM)
-  if (hour >= 18 || hour < 6) {
-    return 'night.png';
-  }
-  
-  // 3. Cloudy/Foggy conditions during day
-  if ([1, 2, 3, 45, 48].includes(code)) {
-    return 'cloudy.png';
-  }
-  
-  // 4. Default: clear morning/day
-  return 'morning.png';
-}
-
 // Fetch Geo-IP location and weather details from Open-Meteo
 async function getLiveWeather() {
   try {
@@ -169,7 +127,7 @@ function getWifiStatus() {
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 320,
-    height: 600, // Height increased to 600 to fit audio visualizer
+    height: 530, // Reverted to 530px to fit elements snuggly without visualizer
     transparent: true,
     frame: false,
     resizable: false,
@@ -192,7 +150,7 @@ function createWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
   
   const x = width - 340;
-  const y = Math.floor((height - 600) / 2);
+  const y = Math.floor((height - 530) / 2);
   mainWindow.setPosition(x, y);
 
   mainWindow.on('closed', () => {
@@ -234,20 +192,11 @@ if (!gotTheLock) {
       }
     });
 
-    // Handle wallpaper change request from renderer or IPC
-    ipcMain.on('trigger-wallpaper-change', (event, code) => {
-      const wp = selectWallpaperForWeather(code);
-      changeWallpaper(wp);
-    });
-
     // Send weather update on window load and every 30 minutes
     mainWindow.webContents.once('did-finish-load', async () => {
       const weatherData = await getLiveWeather();
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('weather-update', weatherData);
-        // Trigger wallpaper change immediately based on weather code
-        const wp = selectWallpaperForWeather(weatherData.code);
-        changeWallpaper(wp);
       }
     });
 
@@ -255,8 +204,6 @@ if (!gotTheLock) {
       const weatherData = await getLiveWeather();
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('weather-update', weatherData);
-        const wp = selectWallpaperForWeather(weatherData.code);
-        changeWallpaper(wp);
       }
     }, 1800000); // 30 minutes
 
