@@ -1,7 +1,11 @@
 const { ipcRenderer } = require('electron');
 
-// 1. DYNAMIC THEME SWITCHER
+// 1. DYNAMIC THEME SWITCHER & WALLPAPER BINDING
 const themes = ['theme-nord', 'theme-cyber', 'theme-forest', 'theme-sakura'];
+// Map themes to mock weather codes to trigger matching wallpapers:
+// theme-nord -> 0 (morning.png), theme-cyber -> 61 (rainy.png)
+// theme-forest -> 45 (cloudy.png), theme-sakura -> 99 (night.png via night check)
+const themeWallpaperCodes = [0, 61, 45, 99];
 let currentThemeIndex = 0;
 
 // Load preferred theme on startup
@@ -19,6 +23,10 @@ themeBtn.addEventListener('click', () => {
   const newTheme = themes[currentThemeIndex];
   document.body.className = newTheme;
   localStorage.setItem('aura-theme', newTheme);
+
+  // Send trigger to main process to change desktop wallpaper to match the theme!
+  const mockCode = themeWallpaperCodes[currentThemeIndex];
+  ipcRenderer.send('trigger-wallpaper-change', mockCode);
 });
 
 // 2. CLOCK & DATE UPDATE
@@ -41,7 +49,7 @@ setInterval(updateTime, 1000);
 ipcRenderer.on('sys-metrics', (event, data) => {
   const { cpu, ram, disk, wifi } = data;
 
-  // Update CPU Ring (since circumference is 100, stroke-dasharray maps directly to %)
+  // Update CPU Ring
   document.getElementById('cpu-val').textContent = `${cpu}%`;
   document.getElementById('cpu-ring').setAttribute('stroke-dasharray', `${cpu}, 100`);
 
@@ -67,7 +75,6 @@ ipcRenderer.on('sys-metrics', (event, data) => {
 });
 
 // 4. LIVE WEATHER LISTENER & INTERPRETER
-// Map Open-Meteo weather codes to clean symbols
 function getWeatherEmoji(code) {
   if (code === 0) return '☀️'; // Clear Sky
   if ([1, 2, 3].includes(code)) return '🌤️'; // Partly Cloudy
@@ -98,7 +105,7 @@ const todoInput = document.getElementById('todo-input');
 const todoList = document.getElementById('todo-list');
 let todoItems = [];
 
-// Load saved Todo Items from LocalStorage
+// Load saved Todo Items
 const savedTodos = localStorage.getItem('aura-todo-items');
 if (savedTodos) {
   try {
@@ -118,9 +125,7 @@ function renderTodos() {
     const li = document.createElement('li');
     li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
     
-    // Add Click listener to toggle completion state
     li.addEventListener('click', (e) => {
-      // Don't trigger if clicked on the delete button
       if (e.target.classList.contains('todo-delete')) return;
       todo.completed = !todo.completed;
       saveTodos();
@@ -130,7 +135,7 @@ function renderTodos() {
     const span = document.createElement('span');
     span.className = 'todo-text';
     span.textContent = todo.text;
-    span.title = todo.text; // show full tooltip on hover
+    span.title = todo.text;
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'todo-delete';
@@ -147,7 +152,6 @@ function renderTodos() {
   });
 }
 
-// Add new task on enter keypress
 todoInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     const text = todoInput.value.trim();
@@ -160,7 +164,6 @@ todoInput.addEventListener('keypress', (e) => {
   }
 });
 
-// Initial Render
 renderTodos();
 
 // 6. PIN / ALWAYS ON TOP CONTROLLER
@@ -179,3 +182,82 @@ pinDot.addEventListener('click', () => {
     pinDot.title = 'Pin to top';
   }
 });
+
+// 7. HIGHLY OPTIMIZED AUDIO VISUALIZER
+const canvas = document.getElementById('visualizer');
+const canvasCtx = canvas.getContext('2d');
+
+let audioCtx;
+let analyser;
+let source;
+let dataArray;
+let bufferLength;
+
+async function initVisualizer() {
+  try {
+    // Capture audio input stream (typically default mic or stereo mix if configured)
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+    
+    analyser.fftSize = 64; // Low sample size for 32 clean bars and ultra low CPU usage
+    bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    
+    drawVisualizer();
+  } catch (err) {
+    console.warn('Microphone/Audio visualizer unavailable:', err.message);
+    drawStaticVisualizer();
+  }
+}
+
+function drawVisualizer() {
+  requestAnimationFrame(drawVisualizer);
+  
+  if (!analyser) return;
+  analyser.getByteFrequencyData(dataArray);
+  
+  canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  const barWidth = (canvas.width / bufferLength) * 1.6;
+  let barHeight;
+  let x = 0;
+  
+  const computedStyle = getComputedStyle(document.body);
+  const accent = computedStyle.getPropertyValue('--accent-cyan').trim() || '#88c0d0';
+  canvasCtx.fillStyle = accent;
+  
+  // Calculate average to check if silent (throttles redraw loops and saves system resource)
+  let sum = 0;
+  for (let i = 0; i < bufferLength; i++) {
+    sum += dataArray[i];
+  }
+  const avg = sum / bufferLength;
+  
+  if (avg < 2) {
+    // In silent mode, draw a simple thin indicator line to minimize rendering cycles
+    canvasCtx.fillRect(0, canvas.height / 2 - 1, canvas.width, 2);
+    return;
+  }
+  
+  for (let i = 0; i < bufferLength; i++) {
+    barHeight = (dataArray[i] / 255) * canvas.height;
+    
+    // Draw centered vertical audio bars
+    const y = (canvas.height - barHeight) / 2;
+    canvasCtx.fillRect(x, y, barWidth - 2, barHeight);
+    
+    x += barWidth;
+  }
+}
+
+function drawStaticVisualizer() {
+  canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+  canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  canvasCtx.fillRect(0, canvas.height / 2 - 1, canvas.width, 2);
+}
+
+initVisualizer();
