@@ -1,27 +1,6 @@
 const { ipcRenderer } = require('electron');
 
-// 1. DYNAMIC THEME SWITCHER
-const themes = ['theme-nord', 'theme-cyber', 'theme-forest', 'theme-sakura'];
-let currentThemeIndex = 0;
-
-// Load preferred theme on startup
-const savedTheme = localStorage.getItem('aura-theme');
-if (savedTheme && themes.includes(savedTheme)) {
-  currentThemeIndex = themes.indexOf(savedTheme);
-  document.body.className = savedTheme;
-} else {
-  document.body.className = themes[0];
-}
-
-const themeBtn = document.getElementById('theme-btn');
-themeBtn.addEventListener('click', () => {
-  currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-  const newTheme = themes[currentThemeIndex];
-  document.body.className = newTheme;
-  localStorage.setItem('aura-theme', newTheme);
-});
-
-// 2. CLOCK & DATE UPDATE
+// 1. CLOCK & DATE UPDATE
 function updateTime() {
   const now = new Date();
   
@@ -37,7 +16,7 @@ function updateTime() {
 updateTime();
 setInterval(updateTime, 1000);
 
-// 3. SYSTEM METRICS LISTENER (CPU, RAM, Disk, Wifi)
+// 2. SYSTEM METRICS LISTENER (CPU, RAM, Disk, Wifi)
 ipcRenderer.on('sys-metrics', (event, data) => {
   const { cpu, ram, disk, wifi } = data;
 
@@ -66,16 +45,16 @@ ipcRenderer.on('sys-metrics', (event, data) => {
   }
 });
 
-// 4. LIVE WEATHER LISTENER & INTERPRETER
+// 3. LIVE WEATHER LISTENER & INTERPRETER
 function getWeatherEmoji(code) {
-  if (code === 0) return '☀️'; // Clear Sky
-  if ([1, 2, 3].includes(code)) return '🌤️'; // Partly Cloudy
-  if ([45, 48].includes(code)) return '🌫️'; // Fog
-  if ([51, 53, 55].includes(code)) return '🌧️'; // Drizzle
-  if ([61, 63, 65, 80, 81, 82].includes(code)) return '🌧️'; // Rain
-  if ([71, 73, 75, 85, 86].includes(code)) return '❄️'; // Snow
-  if ([95, 96, 99].includes(code)) return '🌩️'; // Thunderstorm
-  return '☁️'; // Default cloudy
+  if (code === 0) return '☀️'; 
+  if ([1, 2, 3].includes(code)) return '🌤️'; 
+  if ([45, 48].includes(code)) return '🌫️'; 
+  if ([51, 53, 55].includes(code)) return '🌧️'; 
+  if ([61, 63, 65, 80, 81, 82].includes(code)) return '🌧️'; 
+  if ([71, 73, 75, 85, 86].includes(code)) return '❄️'; 
+  if ([95, 96, 99].includes(code)) return '🌩️'; 
+  return '☁️'; 
 }
 
 ipcRenderer.on('weather-update', (event, data) => {
@@ -92,7 +71,7 @@ ipcRenderer.on('weather-update', (event, data) => {
   }
 });
 
-// 5. INTERACTIVE TODO LIST
+// 4. INTERACTIVE TODO LIST
 const todoInput = document.getElementById('todo-input');
 const todoList = document.getElementById('todo-list');
 let todoItems = [];
@@ -158,19 +137,17 @@ todoInput.addEventListener('keypress', (e) => {
 
 renderTodos();
 
-// 6. PIN / ALWAYS ON TOP CONTROLLER
-const pinDot = document.querySelector('.dot.pin');
+// 5. PIN / ALWAYS ON TOP CONTROLLER (Green light)
+const pinBtn = document.getElementById('pin-btn');
 let isAlwaysOnTop = false;
 
-pinDot.addEventListener('click', () => {
+pinBtn.addEventListener('click', () => {
   isAlwaysOnTop = !isAlwaysOnTop;
   ipcRenderer.send('set-always-on-top', isAlwaysOnTop);
   
   if (isAlwaysOnTop) {
-    pinDot.style.boxShadow = '0 0 8px var(--accent-cyan)';
-    pinDot.title = 'Unpin from top';
+    pinBtn.style.boxShadow = '0 0 6px rgba(39, 201, 63, 0.8)';
   } else {
-    pinDot.style.boxShadow = 'none';
-    pinDot.title = 'Pin to top';
+    pinBtn.style.boxShadow = 'none';
   }
 });

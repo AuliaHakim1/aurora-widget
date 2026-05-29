@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: transparent !important;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+    }
+  </style>
+</head>
+<body>
+  <div class="mac-menubar">
+    <!-- Left Menu -->
+    <div class="menubar-left">
+      <span class="menu-item apple-logo"></span>
+      <span class="menu-item active-app">Finder</span>
+      <span class="menu-item">File</span>
+      <span class="menu-item">Edit</span>
+      <span class="menu-item">View</span>
+      <span class="menu-item">Go</span>
+      <span class="menu-item">Window</span>
+      <span class="menu-item">Help</span>
+    </div>
+
+    <!-- Right status items -->
+    <div class="menubar-right">
+      <span class="menu-status-item" id="menu-battery">100% 🔋</span>
+      <span class="menu-status-item" id="menu-wifi">WiFi: Checking...</span>
+      <span class="menu-status-item" id="menu-clock">00:00</span>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // 1. Live Clock for Menubar
+    function updateClock() {
+      const now = new Date();
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      const dayName = days[now.getDay()];
+      const dateNum = now.getDate();
+      const monthName = months[now.getMonth()];
+      
+      let hours = now.getHours().toString().padStart(2, '0');
+      let minutes = now.getMinutes().toString().padStart(2, '0');
+      
+      document.getElementById('menu-clock').textContent = `${dayName} ${dateNum} ${monthName} ${hours}:${minutes}`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // 2. Battery level query via HTML5 Battery API (Native, 0 RAM overhead)
+    if (navigator.getBattery) {
+      navigator.getBattery().then(battery => {
+        function updateBatteryInfo() {
+          const pct = Math.round(battery.level * 100);
+          const icon = battery.charging ? '⚡' : '🔋';
+          document.getElementById('menu-battery').textContent = `${pct}% ${icon}`;
+        }
+        updateBatteryInfo();
+        battery.addEventListener('levelchange', updateBatteryInfo);
+        battery.addEventListener('chargingchange', updateBatteryInfo);
+      });
+    } else {
+      document.getElementById('menu-battery').style.display = 'none';
+    }
+
+    // 3. WiFi Status updates from Main process
+    ipcRenderer.on('sys-metrics', (event, data) => {
+      const { wifi } = data;
+      if (wifi) {
+        const wifiEl = document.getElementById('menu-wifi');
+        if (wifi.ssid === 'Disconnected' || wifi.ssid === 'Offline') {
+          wifiEl.textContent = '🔌 Offline';
+        } else {
+          wifiEl.textContent = `📶 ${wifi.ssid}`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

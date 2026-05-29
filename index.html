@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AuraWidgets</title>
+  <title>macOS Widgets</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body class="theme-nord">
+<body class="theme-mac">
   <div class="widget-container">
-    <!-- Draggable Header -->
+    <!-- macOS Header (Traffic Lights on Left) -->
     <div class="widget-header">
-      <span class="widget-title">AURA WIDGETS</span>
-      <div class="header-dots">
-        <span class="dot theme" id="theme-btn" title="Change Theme"></span>
-        <span class="dot pin" title="Minimize/Pin"></span>
+      <div class="header-dots mac-style">
         <span class="dot close" onclick="window.close()" title="Close"></span>
+        <span class="dot minimize" onclick="ipcRenderer.send('minimize-widgets')" title="Minimize"></span>
+        <span class="dot pin" id="pin-btn" title="Pin Always on Top"></span>
       </div>
+      <span class="widget-title">WIDGETS</span>
     </div>
 
     <!-- Clock & Date Widget -->
@@ -27,7 +27,7 @@
       <div class="date-display" id="date">Friday, 29 May</div>
     </div>
 
-    <!-- System Performance (Circular Rings) -->
+    <!-- System Performance (macOS Sonoma style rings) -->
     <div class="widget-card system-card">
       <div class="card-title">System Status</div>
       <div class="system-rings-container">

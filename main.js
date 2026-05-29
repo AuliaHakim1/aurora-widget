@@ -1,11 +1,14 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const https = require('https');
 const { exec } = require('child_process');
 
-let mainWindow;
+let widgetsWindow;
+let dockWindow;
+let menubarWindow;
+
 let metricsInterval;
 let weatherInterval;
 
@@ -124,10 +127,52 @@ function getWifiStatus() {
   });
 }
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 320,
-    height: 530, // Reverted to 530px to fit elements snuggly without visualizer
+// Set macOS custom wallpaper via registry commands (fast and reliable on Windows)
+function setMacWallpaper() {
+  try {
+    const wpPath = path.join(app.getAppPath(), 'wallpapers', 'mac_wallpaper.png');
+    // Ensure file exists before calling reg command
+    if (fs.existsSync(wpPath)) {
+      const regCommand = `reg add "HKCU\\Control Panel\\Desktop" /v Wallpaper /t REG_SZ /d "${wpPath}" /f && RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters`;
+      exec(regCommand);
+    }
+  } catch (err) {
+    console.error('Failed to set wallpaper:', err);
+  }
+}
+
+function createMacWindows() {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.bounds;
+
+  // 1. TOP MENU BAR WINDOW
+  menubarWindow = new BrowserWindow({
+    width: width,
+    height: 24,
+    x: 0,
+    y: 0,
+    transparent: true,
+    frame: false,
+    resizable: false,
+    skipTaskbar: true,
+    type: 'desktop', // anchors behind main apps, floats on wallpaper level
+    alwaysOnTop: false,
+    hasShadow: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+  menubarWindow.loadFile('menubar.html');
+
+  // 2. BOTTOM DOCK WINDOW
+  const dockWidth = 520;
+  const dockHeight = 68;
+  dockWindow = new BrowserWindow({
+    width: dockWidth,
+    height: dockHeight,
+    x: Math.floor((width - dockWidth) / 2),
+    y: height - dockHeight - 10, // 10px spacing from screen bottom
     transparent: true,
     frame: false,
     resizable: false,
@@ -137,25 +182,37 @@ function createWindow() {
     hasShadow: false,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false,
-      devTools: false
+      contextIsolation: false
     }
   });
+  dockWindow.loadFile('dock.html');
 
-  mainWindow.loadFile('index.html');
-
-  // Position on the right side of the screen
-  const { screen } = require('electron');
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
-  
-  const x = width - 340;
-  const y = Math.floor((height - 530) / 2);
-  mainWindow.setPosition(x, y);
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  // 3. RIGHT WIDGETS WINDOW
+  const widgetWidth = 320;
+  const widgetHeight = 530;
+  widgetsWindow = new BrowserWindow({
+    width: widgetWidth,
+    height: widgetHeight,
+    x: width - widgetWidth - 20, // 20px padding from screen right
+    y: Math.floor((height - widgetHeight) / 2),
+    transparent: true,
+    frame: false,
+    resizable: false,
+    skipTaskbar: true,
+    type: 'desktop',
+    alwaysOnTop: false,
+    hasShadow: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
   });
+  widgetsWindow.loadFile('index.html');
+
+  // Clean up
+  widgetsWindow.on('closed', () => { widgetsWindow = null; });
+  dockWindow.on('closed', () => { dockWindow = null; });
+  menubarWindow.on('closed', () => { menubarWindow = null; });
 }
 
 const additionalData = { myKey: 'aura-widgets' };
@@ -165,9 +222,9 @@ if (!gotTheLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
+    if (widgetsWindow) {
+      if (widgetsWindow.isMinimized()) widgetsWindow.restore();
+      widgetsWindow.focus();
     }
   });
 
@@ -183,56 +240,76 @@ if (!gotTheLock) {
       console.error('Failed to configure auto-startup:', e);
     }
 
-    createWindow();
+    // Set macOS style wallpaper
+    setMacWallpaper();
 
-    // IPC channel to toggle always-on-top
-    ipcMain.on('set-always-on-top', (event, isAlwaysOnTop) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.setAlwaysOnTop(isAlwaysOnTop);
+    // Create Menubar, Dock, and Widgets Windows
+    createMacWindows();
+
+    // IPC app launch dispatcher from the Dock
+    ipcMain.on('launch-app', (event, appName) => {
+      if (appName === 'finder') {
+        exec('explorer.exe');
+      } else if (appName === 'safari') {
+        exec('start https://google.com');
+      } else if (appName === 'terminal') {
+        exec('start cmd.exe');
+      } else if (appName === 'settings') {
+        exec('control.exe');
       }
     });
 
-    // Send weather update on window load and every 30 minutes
-    mainWindow.webContents.once('did-finish-load', async () => {
+    // IPC channel to toggle always-on-top for Widgets
+    ipcMain.on('set-always-on-top', (event, isAlwaysOnTop) => {
+      if (widgetsWindow && !widgetsWindow.isDestroyed()) {
+        widgetsWindow.setAlwaysOnTop(isAlwaysOnTop);
+      }
+    });
+
+    // IPC channel to minimize widgets window
+    ipcMain.on('minimize-widgets', () => {
+      if (widgetsWindow && !widgetsWindow.isDestroyed()) {
+        widgetsWindow.minimize();
+      }
+    });
+
+    // Send weather update on widgets window load and every 30 minutes
+    widgetsWindow.webContents.once('did-finish-load', async () => {
       const weatherData = await getLiveWeather();
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('weather-update', weatherData);
+      if (widgetsWindow && !widgetsWindow.isDestroyed()) {
+        widgetsWindow.webContents.send('weather-update', weatherData);
       }
     });
 
     weatherInterval = setInterval(async () => {
       const weatherData = await getLiveWeather();
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('weather-update', weatherData);
+      if (widgetsWindow && !widgetsWindow.isDestroyed()) {
+        widgetsWindow.webContents.send('weather-update', weatherData);
       }
     }, 1800000); // 30 minutes
 
-    // Start sending system metrics to the renderer process (CPU, RAM, Disk, Wifi)
+    // Start sending system metrics to the widgets process (CPU, RAM, Disk, Wifi)
     let tickCount = 0;
     let lastDisk = 0;
     let lastWifi = { ssid: 'Disconnected', signal: 0 };
 
     metricsInterval = setInterval(async () => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
+      if (widgetsWindow && !widgetsWindow.isDestroyed()) {
         try {
           const cpu = await getCPUUsage();
-          
-          // RAM calculation
           const totalMem = os.totalmem();
           const freeMem = os.freemem();
           const ram = Math.round(((totalMem - freeMem) / totalMem) * 100);
 
-          // Throttled Disk check (every 30s)
           if (tickCount % 10 === 0 || lastDisk === 0) {
             lastDisk = getDiskUsage();
           }
 
-          // Throttled Wifi check (every 9s)
           if (tickCount % 3 === 0 || tickCount === 0) {
             lastWifi = await getWifiStatus();
           }
 
-          mainWindow.webContents.send('sys-metrics', { 
+          widgetsWindow.webContents.send('sys-metrics', { 
             cpu, 
             ram, 
             disk: lastDisk,
@@ -248,7 +325,7 @@ if (!gotTheLock) {
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
+        createMacWindows();
       }
     });
   });

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Scope specific overrides to keep body transparent and layout tight */
+    body {
+      background: transparent !important;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+    }
+  </style>
+</head>
+<body>
+  <div class="mac-dock">
+    <div class="mac-dock-item" data-app="finder" title="Finder (File Explorer)">
+      <span class="dock-icon">📂</span>
+      <span class="dock-dot"></span>
+    </div>
+    <div class="mac-dock-item" data-app="safari" title="Safari (Web Browser)">
+      <span class="dock-icon">🌐</span>
+      <span class="dock-dot"></span>
+    </div>
+    <div class="mac-dock-item" data-app="settings" title="System Preferences">
+      <span class="dock-icon">⚙️</span>
+      <span class="dock-dot"></span>
+    </div>
+    <div class="mac-dock-item" data-app="terminal" title="Terminal">
+      <span class="dock-icon">💻</span>
+      <span class="dock-dot"></span>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    document.querySelectorAll('.mac-dock-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const appName = item.getAttribute('data-app');
+        
+        // Visual click effect (bounce animation)
+        item.style.transform = 'translateY(-10px) scale(1.15)';
+        setTimeout(() => {
+          item.style.transform = '';
+        }, 300);
+
+        ipcRenderer.send('launch-app', appName);
+      });
+    });
+  </script>
+</body>
+</html>
