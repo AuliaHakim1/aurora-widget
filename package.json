@@ -1,0 +1,19 @@
+{
+  "name": "aura-widgets",
+  "version": "1.0.0",
+  "description": "Minimalist, lightweight desktop widgets for Windows",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "widgets",
+    "desktop",
+    "electron"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^42.3.0"
+  }
+}

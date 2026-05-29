@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraWidgets</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-nord">
+  <div class="widget-container">
+    <!-- Draggable Header -->
+    <div class="widget-header">
+      <span class="widget-title">AURA WIDGETS</span>
+      <div class="header-dots">
+        <span class="dot theme" id="theme-btn" title="Change Theme"></span>
+        <span class="dot pin" title="Minimize/Pin"></span>
+        <span class="dot close" onclick="window.close()" title="Close"></span>
+      </div>
+    </div>
+
+    <!-- Clock & Date Widget -->
+    <div class="widget-card clock-card">
+      <div class="time-display" id="time">00:00</div>
+      <div class="date-display" id="date">Friday, 29 May</div>
+    </div>
+
+    <!-- System Performance (Circular Rings) -->
+    <div class="widget-card system-card">
+      <div class="card-title">System Status</div>
+      <div class="system-rings-container">
+        
+        <!-- CPU Ring -->
+        <div class="ring-item">
+          <div class="ring-svg-wrapper">
+            <svg class="ring-svg" viewBox="0 0 36 36">
+              <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="ring-fill cpu-color" id="cpu-ring" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="ring-text" id="cpu-val">0%</div>
+          </div>
+          <div class="ring-label">CPU</div>
+        </div>
+
+        <!-- RAM Ring -->
+        <div class="ring-item">
+          <div class="ring-svg-wrapper">
+            <svg class="ring-svg" viewBox="0 0 36 36">
+              <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="ring-fill ram-color" id="ram-ring" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="ring-text" id="ram-val">0%</div>
+          </div>
+          <div class="ring-label">RAM</div>
+        </div>
+
+        <!-- Disk Ring -->
+        <div class="ring-item">
+          <div class="ring-svg-wrapper">
+            <svg class="ring-svg" viewBox="0 0 36 36">
+              <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="ring-fill disk-color" id="disk-ring" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="ring-text" id="disk-val">0%</div>
+          </div>
+          <div class="ring-label">Disk</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Live Weather Widget -->
+    <div class="widget-card weather-card">
+      <div class="card-title" id="weather-title">Weather Status</div>
+      <div class="weather-content">
+        <div class="weather-main">
+          <span class="weather-icon" id="weather-icon">☀️</span>
+          <span class="weather-temp" id="weather-temp">--°C</span>
+        </div>
+        <div class="weather-info">
+          <div class="weather-city" id="weather-city">Detecting...</div>
+          <div class="weather-wifi-line" id="wifi-line">WiFi: Offline</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Todo List -->
+    <div class="widget-card todo-card">
+      <div class="card-title">Todo List</div>
+      <div class="todo-input-container">
+        <input type="text" id="todo-input" placeholder="Type a task and hit Enter...">
+      </div>
+      <ul class="todo-list" id="todo-list">
+        <!-- List items will be dynamically rendered here -->
+      </ul>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

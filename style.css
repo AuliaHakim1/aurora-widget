@@ -1,0 +1,429 @@
+:root {
+  /* Fonts */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* 1. THEMES DEFINITION */
+
+/* Theme: Nordic Slate (Default) */
+.theme-nord {
+  --bg-color: rgba(26, 30, 38, 0.7);
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --text-main: #d8dee9;
+  --text-muted: #81a1c1;
+  --text-dim: #4c566a;
+  --accent-cyan: #88c0d0;
+  --accent-blue: #81a1c1;
+}
+
+/* Theme: Cyberpunk Glow */
+.theme-cyber {
+  --bg-color: rgba(18, 10, 28, 0.75);
+  --border-color: rgba(255, 0, 128, 0.15);
+  --border-hover: rgba(0, 255, 255, 0.35);
+  --text-main: #f0f0f5;
+  --text-muted: #ff007f;
+  --text-dim: #5c3c7d;
+  --accent-cyan: #00ffff;
+  --accent-blue: #bd00ff;
+}
+
+/* Theme: Forest Moss */
+.theme-forest {
+  --bg-color: rgba(20, 24, 20, 0.75);
+  --border-color: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(143, 188, 143, 0.25);
+  --text-main: #e2e8e2;
+  --text-muted: #a3be8c;
+  --text-dim: #4f5d42;
+  --accent-cyan: #a3be8c;
+  --accent-blue: #8fbc8f;
+}
+
+/* Theme: Sakura Minimalist */
+.theme-sakura {
+  --bg-color: rgba(36, 26, 28, 0.75);
+  --border-color: rgba(255, 182, 193, 0.1);
+  --border-hover: rgba(255, 105, 180, 0.25);
+  --text-main: #fff0f2;
+  --text-muted: #ffb6c1;
+  --text-dim: #6d4c52;
+  --accent-cyan: #ffb6c1;
+  --accent-blue: #ff69b4;
+}
+
+/* 2. BASE STYLING */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: transparent;
+  color: var(--text-main);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  transition: color 0.3s ease;
+}
+
+.widget-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  background: var(--bg-color);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.widget-container:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+/* Header & Drag Area */
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  -webkit-app-region: drag;
+}
+
+.widget-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  transition: color 0.3s ease;
+}
+
+.header-dots {
+  display: flex;
+  gap: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dot:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.dot.theme {
+  background-color: #b48ead; /* purple */
+}
+.theme-cyber .dot.theme {
+  background-color: #ff00ff;
+}
+.theme-forest .dot.theme {
+  background-color: #8fbc8f;
+}
+
+.dot.pin {
+  background-color: var(--accent-cyan);
+}
+
+.dot.close {
+  background-color: var(--accent-red, #bf616a);
+}
+
+/* Base Widget Card */
+.widget-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.widget-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-hover);
+}
+
+/* Clock Card */
+.clock-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 14px;
+}
+
+.time-display {
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: -1px;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.date-display {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Card Titles */
+.card-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* 3. SYSTEM RINGS (CIRCULAR SVGS) */
+
+.system-rings-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 8px;
+}
+
+.ring-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 30%;
+}
+
+.ring-svg-wrapper {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.03);
+  stroke-width: 2.8;
+}
+
+.ring-fill {
+  fill: none;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.8s cubic-bezier(0.1, 0.8, 0.25, 1);
+}
+
+.cpu-color {
+  stroke: var(--accent-cyan);
+  filter: drop-shadow(0 0 2px var(--accent-cyan));
+}
+
+.ram-color {
+  stroke: var(--accent-blue);
+  filter: drop-shadow(0 0 2px var(--accent-blue));
+}
+
+.disk-color {
+  stroke: var(--text-muted);
+  filter: drop-shadow(0 0 2px var(--text-muted));
+}
+
+.ring-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.ring-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* 4. WEATHER CARD */
+
+.weather-card {
+  padding: 12px 14px;
+}
+
+.weather-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weather-icon {
+  font-size: 22px;
+}
+
+.weather-temp {
+  font-size: 18px;
+  font-weight: 300;
+  font-family: var(--font-mono);
+  color: var(--text-main);
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.weather-city {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.weather-wifi-line {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+/* 5. INTERACTIVE TODO LIST */
+
+.todo-card {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  overflow: hidden;
+  max-height: 180px;
+}
+
+.todo-input-container {
+  margin-bottom: 8px;
+  -webkit-app-region: no-drag;
+}
+
+#todo-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#todo-input:focus {
+  border-color: var(--accent-cyan);
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+.todo-list {
+  list-style: none;
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 2px;
+  -webkit-app-region: no-drag;
+}
+
+.todo-list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.todo-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.todo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.01);
+  font-size: 12px;
+  animation: itemFadeIn 0.2s ease;
+  cursor: pointer;
+}
+
+@keyframes itemFadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.todo-item:hover .todo-delete {
+  opacity: 0.6;
+}
+
+.todo-text {
+  flex-grow: 1;
+  color: var(--text-main);
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+  padding-right: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: var(--text-dim);
+}
+
+.todo-delete {
+  font-size: 14px;
+  color: var(--accent-red, #bf616a);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  padding: 0 4px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.todo-delete:hover {
+  opacity: 1 !important;
+  transform: scale(1.1);
+}
